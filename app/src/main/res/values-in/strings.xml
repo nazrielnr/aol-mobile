@@ -1,0 +1,273 @@
+<resources>
+    <!-- App & Common Actions -->
+    <string name="app_name">Artha Tracker</string>
+    <string name="badge_pro">PRO</string>
+    <string name="action_cancel">Batal</string>
+    <string name="action_delete">Hapus</string>
+    <string name="action_close">Tutup</string>
+    <string name="action_save">Simpan</string>
+    <string name="action_reset">Reset</string>
+    <string name="action_back">Kembali</string>
+    <string name="action_view">Lihat</string>
+    <string name="action_detail">Detail</string>
+    <string name="label_total_prefix">Total %1$s</string>
+    <string name="label_total">Total  </string>
+    <string name="empty_state_title">Data Kosong</string>
+    <string name="empty_state_default_message">Belum ada transaksi yang tercatat</string>
+
+    <!-- Bottom Navigation & Speed Dial -->
+    <string name="nav_home">Beranda</string>
+    <string name="nav_wallet">Dompet</string>
+    <string name="nav_activity">Aktivitas</string>
+    <string name="nav_reports">Laporan</string>
+    <string name="nav_settings">Pengaturan</string>
+    <string name="cd_close_menu">Tutup Menu</string>
+    <string name="cd_add_transaction">Catat Transaksi</string>
+    <string name="speed_dial_voice">Catat Suara</string>
+    <string name="speed_dial_camera">Foto Struk</string>
+    <string name="speed_dial_manual">Input Manual</string>
+    <string name="prefill_receipt_title">Struk Belanja Kasir</string>
+    <string name="toast_receipt_captured">Foto struk diambil (Total Rp 75.000 terdeteksi)</string>
+    <string name="toast_voice_heard">Terdengar: \"%1$s\"</string>
+    <string name="speech_prompt">Katakan transaksi Anda (cth: \'Makan siang 25 ribu\')</string>
+    <string name="toast_speech_unavailable">Google Speech Recognition tidak tersedia</string>
+    <string name="prefill_fallback_lunch">Makan Siang</string>
+    <string name="snackbar_transaction_saved">Transaksi \'%1$s\' berhasil disimpan</string>
+
+    <!-- Periods & Date Formatting -->
+    <string name="month_aug_2026">Agustus 2026</string>
+    <string name="month_sep_2026">September 2026</string>
+    <string name="month_oct_2026">Oktober 2026</string>
+    <string name="month_nov_2026">November 2026</string>
+    <string name="period_all">Semua Periode</string>
+    <string name="date_today">Hari ini</string>
+    <string name="date_yesterday">Kemarin</string>
+    <string name="date_today_with_time">Hari ini, %1$s</string>
+    <string name="date_yesterday_with_time">Kemarin, %1$s</string>
+
+    <!-- Transaction Types & Filters -->
+    <string name="type_expense">Pengeluaran</string>
+    <string name="type_income">Pemasukan</string>
+    <string name="filter_all">Semua</string>
+    <string name="filter_all_with_count">Semua (%1$d)</string>
+
+    <!-- Categories -->
+    <string name="category_food">Makanan &amp; Minuman</string>
+    <string name="category_transport">Transportasi</string>
+    <string name="category_shopping">Belanja</string>
+    <string name="category_bills">Tagihan &amp; Utilitas</string>
+    <string name="category_entertainment">Hiburan</string>
+    <string name="category_health">Kesehatan</string>
+    <string name="category_education">Pendidikan</string>
+    <string name="category_other">Lainnya</string>
+    <string name="category_salary">Gaji Pokok</string>
+    <string name="category_bonus">Bonus &amp; THR</string>
+    <string name="category_investment">Investasi</string>
+    <string name="category_freelance">Proyek Lepas</string>
+    <string name="category_business">Usaha &amp; Bisnis</string>
+
+    <!-- Payment Sources -->
+    <string name="payment_gopay">GoPay</string>
+    <string name="payment_ovo">OVO</string>
+    <string name="payment_bni">Bank BNI</string>
+    <string name="payment_bca">Bank BCA</string>
+    <string name="payment_mandiri">Bank Mandiri</string>
+    <string name="payment_cash">Tunai</string>
+
+    <!-- TopBar & Header -->
+    <string name="cd_profile">Profil</string>
+    <string name="cd_notifications">Notifikasi</string>
+    <string name="cd_select_month">Pilih bulan</string>
+    <string name="menu_help_support">Bantuan &amp; Dukungan</string>
+
+    <!-- Home Screen & Balance Card -->
+    <string name="home_total_balance">Total Saldo</string>
+    <string name="home_total_balance_upper">TOTAL SALDO</string>
+    <string name="home_comparison_surplus">+Rp 50.000 dari minggu lalu</string>
+    <string name="home_comparison_deficit">-Rp 50.000 dari minggu lalu</string>
+    <string name="home_monthly_surplus">+Rp 1.500.000 surplus bulan ini</string>
+    <string name="home_monthly_deficit">Defisit kas bulan ini</string>
+    <string name="home_cash_surplus">Kas Surplus</string>
+    <string name="home_cash_deficit">Defisit Kas</string>
+    <string name="cd_hide_balance">Sembunyikan saldo</string>
+    <string name="cd_show_balance">Tampilkan saldo</string>
+    <string name="home_your_money">Keuangan Anda</string>
+    <string name="home_insight_ready">Ringkasan analisis Anda siap</string>
+    <string name="home_transactions">Transaksi</string>
+    <string name="home_empty_transactions">Belum ada catatan aktivitas transaksi.</string>
+    <string name="home_bento_income">Pemasukan</string>
+    <string name="home_bento_expenses">Pengeluaran</string>
+    <string name="dialog_delete_title">Hapus transaksi?</string>
+    <string name="dialog_delete_message">Transaksi ini akan dihapus dari catatan keuangan Anda.</string>
+
+    <!-- Wallet Screen -->
+    <string name="wallet_total_all_accounts">Total Saldo Semua Akun</string>
+    <string name="wallet_name_bca">Bank BCA</string>
+    <string name="wallet_type_main">Rekening Utama</string>
+    <string name="wallet_name_mandiri">Bank Mandiri</string>
+    <string name="wallet_type_savings">Rekening Tabungan</string>
+    <string name="wallet_name_gopay">GoPay &amp; E-Wallet</string>
+    <string name="wallet_type_ewallet">Dompet Digital</string>
+    <string name="wallet_name_cash">Uang Tunai (Cash)</string>
+    <string name="wallet_acc_physical">Dompet Fisik</string>
+    <string name="wallet_type_cash">Uang Tunai</string>
+    <string name="wallet_action_transfer">Transfer</string>
+    <string name="wallet_action_topup">Top Up</string>
+    <string name="wallet_action_new_account">Akun Baru</string>
+    <string name="wallet_section_accounts">Daftar Akun &amp; Rekening</string>
+    <string name="wallet_account_count">%1$d Akun</string>
+    <string name="wallet_type_percentage">%1$s • %2$d%% total</string>
+
+    <!-- Activity Screen -->
+    <string name="activity_title">Aktivitas</string>
+    <string name="activity_search_placeholder">Cari transaksi, catatan, nominal…</string>
+    <string name="cd_close_search">Tutup Pencarian</string>
+    <string name="cd_search_transaction">Cari Transaksi</string>
+    <string name="day_mon">SEN</string>
+    <string name="day_tue">SEL</string>
+    <string name="day_wed">RAB</string>
+    <string name="day_thu">KAM</string>
+    <string name="day_fri">JUM</string>
+    <string name="day_sat">SAB</string>
+    <string name="day_sun">MIN</string>
+    <string name="activity_selected_date_status">Tanggal %1$d %2$s (%3$d transaksi)</string>
+    <string name="activity_show_all_dates">Tampilkan Semua ✕</string>
+    <string name="activity_single_day_header">Transaksi %1$d %2$s</string>
+    <string name="activity_empty_on_date">Tidak ada transaksi pada tanggal %1$d %2$s</string>
+    <string name="activity_empty_search">Tidak ada transaksi yang cocok dengan \"%1$s\"</string>
+    <string name="activity_empty_period">Belum ada transaksi pada periode ini</string>
+
+    <!-- Stats / Reports Screen -->
+    <string name="stats_title">Laporan Analisis</string>
+    <string name="stats_tab_expenses">Pengeluaran</string>
+    <string name="stats_tab_income">Pemasukan</string>
+    <string name="stats_expenses_report">Laporan Pengeluaran</string>
+    <string name="stats_income_report">Laporan Pemasukan</string>
+    <string name="cd_bar_chart">Grafik Batang</string>
+    <string name="cd_donut_chart">Grafik Donat</string>
+    <string name="stats_empty_expense">Belum ada catatan pengeluaran pada periode ini.</string>
+    <string name="stats_empty_income">Belum ada catatan pemasukan pada periode ini.</string>
+    <string name="stats_all_expenses">Semua Pengeluaran</string>
+    <string name="stats_all_income">Semua Pemasukan</string>
+    <string name="stats_total_expenses">Total Pengeluaran</string>
+    <string name="stats_total_income">Total Pemasukan</string>
+    <string name="stats_top_expense_distribution">Distribusi Pengeluaran Terbesar</string>
+    <string name="stats_top_income_distribution">Distribusi Pemasukan Terbesar</string>
+    <string name="stats_category_count">%1$d Kategori</string>
+    <string name="stats_percentage_of_total">%1$s%% dari total</string>
+    <string name="stats_vs_last_month">vs bulan lalu</string>
+
+    <!-- Add & Detail Transaction Bottom Sheets -->
+    <string name="add_tx_title">Catat Transaksi</string>
+    <string name="add_tx_subtitle">Masukkan rincian transaksi Anda</string>
+    <string name="add_tx_amount_label">NOMINAL TRANSAKSI</string>
+    <string name="add_tx_amount_placeholder">Rp 0</string>
+    <string name="chip_plus_10k">+10rb</string>
+    <string name="chip_plus_20k">+20rb</string>
+    <string name="chip_plus_50k">+50rb</string>
+    <string name="chip_plus_100k">+100rb</string>
+    <string name="add_tx_field_title_label">Judul / Keterangan Transaksi</string>
+    <string name="add_tx_field_title_placeholder_expense">cth: Makan Siang, Bensin, Kopi</string>
+    <string name="add_tx_field_title_placeholder_income">cth: Gaji, Bonus, Freelance</string>
+    <string name="add_tx_category_label">Kategori</string>
+    <string name="add_tx_note_label">Catatan Tambahan (Opsional)</string>
+    <string name="add_tx_save_button">Simpan Transaksi</string>
+    <string name="detail_label_category">Kategori</string>
+    <string name="detail_label_payment_source">Sumber Dana</string>
+    <string name="detail_label_timestamp">Waktu Transaksi</string>
+    <string name="detail_label_note">Catatan</string>
+    <string name="voice_default_income_title">Pemasukan Suara</string>
+    <string name="voice_default_expense_title">Pengeluaran Suara</string>
+
+    <!-- Settings Screen -->
+    <string name="settings_title">Pengaturan</string>
+    <string name="cd_edit_profile">Edit Profil</string>
+    <string name="settings_section_appearance">Tampilan &amp; Preferensi</string>
+    <string name="settings_dark_mode_title">Tema Gelap (Dark Mode)</string>
+    <string name="settings_dark_mode_subtitle">Tampilan hemat daya &amp; nyaman di mata</string>
+    <string name="settings_language_title">Bahasa Aplikasi</string>
+    <string name="settings_language_subtitle">Pilih bahasa tampilan (Indonesia / Inggris)</string>
+    <string name="settings_language_id">Bahasa Indonesia</string>
+    <string name="settings_language_en">English</string>
+    <string name="settings_language_id_sub">Bahasa Indonesia (Bawaan)</string>
+    <string name="settings_language_en_sub">Bahasa Inggris Internasional</string>
+    <string name="settings_language_dialog_title">Pilih Bahasa Aplikasi</string>
+    <string name="settings_language_dialog_subtitle">Seluruh menu dan teks akan diperbarui secara instan</string>
+    <string name="toast_language_changed">Bahasa diubah ke %1$s</string>
+    <string name="settings_currency_title">Mata Uang Utama</string>
+    <string name="settings_currency_value">IDR (Rupiah)</string>
+    <string name="toast_currency_active">Mata uang aktif: Rupiah (IDR)</string>
+    <string name="settings_reminder_title">Pengingat Harian</string>
+    <string name="settings_reminder_subtitle">Ingatkan catat pengeluaran tiap pukul 20:00</string>
+    <string name="settings_section_security">Keamanan &amp; Privasi</string>
+    <string name="settings_biometric_title">Kunci Aplikasi (Biometrik)</string>
+    <string name="settings_biometric_subtitle">Gunakan sidik jari saat membuka aplikasi</string>
+    <string name="settings_hide_balance_title">Sembunyikan Saldo di Beranda</string>
+    <string name="settings_hide_balance_subtitle">Samarkan nominal saldo untuk privasi</string>
+    <string name="settings_section_data">Data &amp; Cadangan</string>
+    <string name="settings_cloud_backup_title">Cadangkan ke Cloud</string>
+    <string name="settings_cloud_backup_value">Google Drive</string>
+    <string name="toast_cloud_backup_ready">Pencadangan cloud siap digunakan</string>
+    <string name="settings_export_title">Ekspor Laporan Transaksi</string>
+    <string name="settings_export_value">CSV / Excel</string>
+    <string name="toast_export_started">Ekspor data CSV dimulai…</string>
+    <string name="settings_clear_data_title">Hapus Semua Riwayat Transaksi</string>
+    <string name="toast_clear_data_protected">Fitur reset data dilindungi PIN</string>
+    <string name="settings_section_about">Tentang Aplikasi</string>
+    <string name="settings_version_title">Versi Aplikasi</string>
+    <string name="settings_version_value">v1.0.0 Pro (2026.10)</string>
+    <string name="settings_help_center_title">Pusat Bantuan &amp; Umpan Balik</string>
+    <string name="toast_contact_support">Hubungi developer di support@aol-mobile.com</string>
+
+    <!-- Additional String Aliases -->
+    <string name="balance_card_total_balance_upper">TOTAL SALDO</string>
+    <string name="currency_rp_prefix">Rp</string>
+    <string name="balance_card_surplus">Kas Surplus</string>
+    <string name="balance_card_deficit">Defisit Kas</string>
+    <string name="period_aug_2026">Agustus 2026</string>
+    <string name="period_sep_2026">September 2026</string>
+    <string name="period_oct_2026">Oktober 2026</string>
+    <string name="period_nov_2026">November 2026</string>
+    <string name="sticky_header_surplus_month">+Rp 1.500.000 surplus bulan ini</string>
+    <string name="sticky_header_deficit_month">Defisit kas bulan ini</string>
+    <string name="month_october">Oktober</string>
+    <string name="calendar_day_mon">SEN</string>
+    <string name="calendar_day_tue">SEL</string>
+    <string name="calendar_day_wed">RAB</string>
+    <string name="calendar_day_thu">KAM</string>
+    <string name="calendar_day_fri">JUM</string>
+    <string name="calendar_day_sat">SAB</string>
+    <string name="calendar_day_sun">MIN</string>
+    <string name="activity_show_all_days">Tampilkan Semua ✕</string>
+    <string name="activity_filter_all_count">Semua (%1$d)</string>
+    <string name="activity_empty_date_format">Tidak ada transaksi pada tanggal %1$d %2$s</string>
+    <string name="activity_empty_search_format">Tidak ada transaksi yang cocok dengan \"%1$s\"</string>
+    <string name="activity_single_day_header_format">Transaksi %1$d %2$s</string>
+    <string name="home_daily_total_format">Total %1$s</string>
+    <string name="dialog_delete_transaction_title">Hapus transaksi?</string>
+    <string name="dialog_delete_transaction_message">Transaksi ini akan dihapus dari catatan keuangan Anda.</string>
+    <string name="action_clear">Bersihkan</string>
+    <string name="cd_search_transactions">Cari Transaksi</string>
+    <string name="stats_total_label">Total  </string>
+    <string name="category_other_expense">Lainnya</string>
+    <string name="stats_bar_top_expense_title">Distribusi Pengeluaran Terbesar</string>
+    <string name="stats_bar_top_income_title">Distribusi Pemasukan Terbesar</string>
+    <string name="stats_categories_count_format">%1$d Kategori</string>
+    <string name="stats_percentage_of_total_format">%1$s%% dari total</string>
+    <string name="wallet_bca_name">Bank BCA</string>
+    <string name="wallet_bca_number">•••• 8842</string>
+    <string name="wallet_bca_type">Rekening Utama</string>
+    <string name="wallet_mandiri_name">Bank Mandiri</string>
+    <string name="wallet_mandiri_number">•••• 1094</string>
+    <string name="wallet_mandiri_type">Rekening Tabungan</string>
+    <string name="wallet_gopay_name">GoPay &amp; E-Wallet</string>
+    <string name="wallet_gopay_number">0812 •••• 9901</string>
+    <string name="wallet_gopay_type">Dompet Digital</string>
+    <string name="wallet_cash_name">Uang Tunai (Cash)</string>
+    <string name="wallet_cash_number">Dompet Fisik</string>
+    <string name="wallet_cash_type">Uang Tunai</string>
+    <string name="wallet_total_balance_all">Total Saldo Semua Akun</string>
+    <string name="wallet_accounts_list_title">Daftar Akun &amp; Rekening</string>
+    <string name="wallet_accounts_count_format">%1$d Akun</string>
+    <string name="wallet_distribution_format">%1$s • %2$d%% total</string>
+</resources>
