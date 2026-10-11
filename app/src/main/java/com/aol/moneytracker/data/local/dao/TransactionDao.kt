@@ -19,7 +19,7 @@ interface TransactionDao {
     @Query("SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE type = 'INCOME'")
     fun getTotalIncome(): Flow<Long>
 
-    @Query("SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE type = 'EXPENSE'")
+    @Query("SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE type = 'EXPENSE' AND categoryId != 'transfer'")
     fun getTotalExpense(): Flow<Long>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

@@ -30,6 +30,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.SheetState
@@ -57,13 +58,12 @@ import com.aol.moneytracker.domain.model.Transaction
 import com.aol.moneytracker.domain.model.TransactionType
 import com.aol.moneytracker.presentation.components.CategorySelector
 import com.aol.moneytracker.presentation.components.SegmentedTypeSwitch
+import com.aol.moneytracker.presentation.components.StandardModalBottomSheet
 import com.aol.moneytracker.presentation.theme.MoneyTrackerTheme
 import com.aol.moneytracker.util.CurrencyFormatter
 
 /**
- * Compact, Clean & Modern Add Transaction Modal (Option 3):
- * Focuses purely on clean form entry with quick amount helpers (+10k, +50k, etc.),
- * keeping the UI fast, spacious, and clutter-free.
+ * Compact, Clean & Modern Add Transaction Modal powered by global StandardModalBottomSheet.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -91,58 +91,87 @@ fun AddTransactionBottomSheet(
     val parsedAmount = CurrencyFormatter.parseAmount(rawAmount)
     val isValid = parsedAmount > 0 && title.isNotBlank()
 
-    ModalBottomSheet(
+    StandardModalBottomSheet(
         onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
-        containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp)
-                .padding(bottom = 36.dp)
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            // 1. Header with Title & Dismiss Button
+        title = stringResource(R.string.add_tx_title),
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        footer = {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
+                OutlinedButton(
+                    onClick = { dismiss() },
+                    shape = CircleShape,
+                    border = BorderStroke(
+                        width = 1.dp,
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f)
+                    ),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.90f),
+                        contentColor = MaterialTheme.colorScheme.onSurface
+                    ),
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(50.dp)
+                ) {
                     Text(
-                        text = stringResource(R.string.add_tx_title),
-                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = stringResource(R.string.add_tx_subtitle),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        text = stringResource(R.string.action_cancel),
+                        style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold)
                     )
                 }
 
-                IconButton(
-                    onClick = onDismiss,
+                Button(
+                    onClick = {
+                        if (isValid) {
+                            val selectedCat = Category.findCategory(selectedCategoryId, type)
+                            val transaction = Transaction(
+                                title = title.trim(),
+                                amount = parsedAmount,
+                                type = type,
+                                categoryId = selectedCategoryId,
+                                categoryName = context.getString(selectedCat.nameRes),
+                                dateMillis = System.currentTimeMillis(),
+                                note = note.trim()
+                            )
+                            dismiss { onSave(transaction) }
+                        }
+                    },
+                    enabled = isValid,
                     modifier = Modifier
-                        .size(36.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.7f))
+                        .weight(1.35f)
+                        .height(50.dp),
+                    shape = CircleShape,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                        disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                        disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                    )
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = stringResource(R.string.action_close),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        imageVector = Icons.Default.Check,
+                        contentDescription = null,
                         modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = stringResource(R.string.add_tx_save_button),
+                        style = MaterialTheme.typography.labelLarge.copy(
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 15.sp
+                        )
                     )
                 }
             }
-
-            // 2. Segmented Type Switch (Pengeluaran vs Pemasukan)
+        }
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Segmented Type Switch (Pengeluaran vs Pemasukan)
             SegmentedTypeSwitch(
                 selectedType = type,
                 onTypeSelected = { newType ->
@@ -345,52 +374,6 @@ fun AddTransactionBottomSheet(
                     unfocusedContainerColor = MaterialTheme.colorScheme.surface
                 )
             )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // 7. Full-Width Pill Action Button
-            Button(
-                onClick = {
-                    if (isValid) {
-                        val selectedCat = Category.findCategory(selectedCategoryId, type)
-                        val transaction = Transaction(
-                            title = title.trim(),
-                            amount = parsedAmount,
-                            type = type,
-                            categoryId = selectedCategoryId,
-                            categoryName = context.getString(selectedCat.nameRes),
-                            dateMillis = System.currentTimeMillis(),
-                            note = note.trim()
-                        )
-                        onSave(transaction)
-                    }
-                },
-                enabled = isValid,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp),
-                shape = RoundedCornerShape(26.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary,
-                    disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                    disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
-                )
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Check,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = stringResource(R.string.add_tx_save_button),
-                    style = MaterialTheme.typography.labelLarge.copy(
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 15.sp
-                    )
-                )
-            }
         }
     }
 }

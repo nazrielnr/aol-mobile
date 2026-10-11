@@ -31,13 +31,23 @@ data class Category(
             Category("other_income", "Lainnya", R.string.category_other, TransactionType.INCOME, "savings")
         )
 
+        val TRANSFER_CATEGORY = Category(
+            "transfer",
+            "Transfer Saldo",
+            R.string.wallet_action_transfer,
+            TransactionType.EXPENSE,
+            "swap_horiz"
+        )
+
         fun findCategory(id: String, type: TransactionType): Category {
+            if (id.equals("transfer", ignoreCase = true)) return TRANSFER_CATEGORY
             val list = if (type == TransactionType.INCOME) INCOME_CATEGORIES else EXPENSE_CATEGORIES
             return list.firstOrNull { it.id == id } ?: list.last()
         }
 
         @StringRes
         fun getCategoryNameRes(id: String): Int {
+            if (id.equals("transfer", ignoreCase = true)) return R.string.wallet_action_transfer
             return (EXPENSE_CATEGORIES + INCOME_CATEGORIES)
                 .firstOrNull { it.id.equals(id, ignoreCase = true) }
                 ?.nameRes ?: R.string.category_other

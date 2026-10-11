@@ -36,7 +36,11 @@ class StatsViewModel(
         repository.getAllTransactions(),
         repository.getFinancialSummary()
     ) { transactions, summary ->
-        val expenseStats = groupByCategory(transactions.filter { it.type == TransactionType.EXPENSE })
+        val expenseStats = groupByCategory(
+            transactions.filter {
+                it.type == TransactionType.EXPENSE && !it.categoryId.equals("transfer", ignoreCase = true)
+            }
+        )
         val incomeStats = groupByCategory(transactions.filter { it.type == TransactionType.INCOME })
 
         StatsUiState(

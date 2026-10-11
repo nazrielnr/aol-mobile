@@ -43,6 +43,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -75,6 +76,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -93,6 +95,8 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.layout
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -114,6 +118,7 @@ import com.aol.moneytracker.presentation.components.FilterDropdownMenu
 import com.aol.moneytracker.presentation.components.GlobalTopBar
 import com.aol.moneytracker.presentation.components.ModernTransactionCard
 import com.aol.moneytracker.presentation.components.TransactionDetailBottomSheet
+import com.aol.moneytracker.presentation.screens.wallet.WalletStateHolder
 import com.aol.moneytracker.presentation.theme.MoneyTrackerTheme
 import com.aol.moneytracker.util.CurrencyFormatter
 import kotlinx.coroutines.delay
@@ -130,14 +135,25 @@ fun HomeScreen(
     selectedMonth: String = "",
     months: List<String> = emptyList(),
     onMonthSelected: (String) -> Unit = {},
-    onSettingsClick: () -> Unit = {}
+    onSettingsClick: () -> Unit = {},
+    onNotificationClick: () -> Unit = {},
+    onNavigateToReports: () -> Unit = {}
 ) {
+    val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
-    var transactionToDeleteId by remember { mutableStateOf<Long?>(null) }
+    var transactionToDelete by remember { mutableStateOf<Transaction?>(null) }
     var selectedTransactionForDetail by remember { mutableStateOf<Transaction?>(null) }
     val detailSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     val density = LocalDensity.current
+    var syncedHeaderPillWidthPx by remember { mutableIntStateOf(0) }
+    val syncedHeaderPillWidthDp = remember(syncedHeaderPillWidthPx, density) {
+        if (syncedHeaderPillWidthPx > 0) {
+            with(density) { syncedHeaderPillWidthPx.toDp() }
+        } else {
+            76.dp
+        }
+    }
     val coroutineScope = rememberCoroutineScope()
     val listState = rememberLazyListState()
 
@@ -490,19 +506,26 @@ fun HomeScreen(
                                 )
 
                                 Surface(
-                                    onClick = { /* Detail */ },
+                                    onClick = onNavigateToReports,
                                     shape = CircleShape,
                                     color = MaterialTheme.colorScheme.surfaceContainerLow,
                                     border = BorderStroke(
                                         width = 1.dp,
                                         color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
                                     ),
-                                    modifier = Modifier.height(32.dp)
+                                    modifier = Modifier
+                                        .height(32.dp)
+                                        .widthIn(min = syncedHeaderPillWidthDp)
+                                        .onSizeChanged { size ->
+                                            if (size.width > syncedHeaderPillWidthPx) {
+                                                syncedHeaderPillWidthPx = size.width
+                                            }
+                                        }
                                 ) {
                                     Row(
                                         modifier = Modifier.padding(start = 12.dp, end = 8.dp),
                                         verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(2.dp)
+                                        horizontalArrangement = Arrangement.SpaceBetween
                                     ) {
                                         Text(
                                             text = stringResource(R.string.action_detail),
@@ -510,7 +533,8 @@ fun HomeScreen(
                                                 fontWeight = FontWeight.SemiBold,
                                                 fontSize = 12.sp
                                             ),
-                                            color = MaterialTheme.colorScheme.onSurface
+                                            color = MaterialTheme.colorScheme.onSurface,
+                                            modifier = Modifier.padding(end = 2.dp)
                                         )
                                         Icon(
                                             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
@@ -549,6 +573,7 @@ fun HomeScreen(
                     // Insight Banner
                     item(key = "insight_banner") {
                         Surface(
+                            onClick = onNavigateToReports,
                             shape = RoundedCornerShape(20.dp),
                             color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.45f),
                             border = BorderStroke(
@@ -633,7 +658,13 @@ fun HomeScreen(
 
                                 FilterDropdownMenu(
                                     selectedFilter = uiState.selectedFilter,
-                                    onFilterSelected = { viewModel.onFilterChange(it) }
+                                    onFilterSelected = { viewModel.onFilterChange(it) },
+                                    triggerMinWidth = syncedHeaderPillWidthDp,
+                                    modifier = Modifier.onSizeChanged { size ->
+                                        if (uiState.selectedFilter == TransactionFilter.ALL && size.width > syncedHeaderPillWidthPx) {
+                                            syncedHeaderPillWidthPx = size.width
+                                        }
+                                    }
                                 )
                             }
 
@@ -663,7 +694,11 @@ fun HomeScreen(
                         uiState.groupedTransactions.entries.forEachIndexed { index, (dateGroup, transactionsInGroup) ->
                             item(key = "header_$dateGroup") {
                                 val dayTotal = transactionsInGroup.sumOf {
-                                    if (it.type == TransactionType.EXPENSE) -it.amount else it.amount
+                                    when {
+                                        it.categoryId.equals("transfer", ignoreCase = true) -> 0L
+                                        it.type == TransactionType.EXPENSE -> -it.amount
+                                        else -> it.amount
+                                    }
                                 }
                                 Column(modifier = Modifier.fillMaxWidth()) {
                                     if (index > 0) {
@@ -727,6 +762,7 @@ fun HomeScreen(
             selectedMonth = selectedMonth,
             onMonthSelected = onMonthSelected,
             onSettingsClick = onSettingsClick,
+            onNotificationClick = onNotificationClick,
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .zIndex(10f)
@@ -741,15 +777,15 @@ fun HomeScreen(
             onDismiss = { selectedTransactionForDetail = null },
             onDeleteClick = {
                 selectedTransactionForDetail = null
-                transactionToDeleteId = it.id
+                transactionToDelete = it
             }
         )
     }
 
     // Confirmation Dialog for Deletion
-    transactionToDeleteId?.let { id ->
+    transactionToDelete?.let { tx ->
         AlertDialog(
-            onDismissRequest = { transactionToDeleteId = null },
+            onDismissRequest = { transactionToDelete = null },
             title = {
                 Text(
                     text = stringResource(R.string.dialog_delete_transaction_title),
@@ -766,15 +802,16 @@ fun HomeScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        viewModel.deleteTransaction(id)
-                        transactionToDeleteId = null
+                        WalletStateHolder.revertTransactionEffect(context, tx)
+                        viewModel.deleteTransaction(tx.id)
+                        transactionToDelete = null
                     }
                 ) {
                     Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { transactionToDeleteId = null }) {
+                TextButton(onClick = { transactionToDelete = null }) {
                     Text(stringResource(R.string.action_cancel))
                 }
             },

@@ -33,6 +33,41 @@
             android:exported="false"
             android:theme="@style/Theme.MoneyTracker"
             android:windowSoftInputMode="adjustResize" />
+
+        <!-- Dedicated Add Wallet Activity for native Android Cross-Activity Predictive Back -->
+        <activity
+            android:name=".AddWalletActivity"
+            android:exported="false"
+            android:theme="@style/Theme.MoneyTracker"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- Dedicated Transfer Wallet Activity for native Android Cross-Activity Predictive Back -->
+        <activity
+            android:name=".TransferWalletActivity"
+            android:exported="false"
+            android:theme="@style/Theme.MoneyTracker"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- Dedicated Add/Edit Transaction Activity for native Android Cross-Activity Predictive Back -->
+        <activity
+            android:name=".AddTransactionActivity"
+            android:exported="false"
+            android:theme="@style/Theme.MoneyTracker"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- Dedicated Receipt Camera Activity (Foto Struk AI OCR) -->
+        <activity
+            android:name=".ReceiptCameraActivity"
+            android:exported="false"
+            android:theme="@style/Theme.MoneyTracker"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- Dedicated Notification Activity for native Android Cross-Activity Predictive Back -->
+        <activity
+            android:name=".NotificationActivity"
+            android:exported="false"
+            android:theme="@style/Theme.MoneyTracker"
+            android:windowSoftInputMode="adjustResize" />
     </application>
 
 </manifest>

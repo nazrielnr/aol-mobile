@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material.icons.filled.SportsEsports
 import androidx.compose.material.icons.filled.Storefront
+import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -150,6 +151,7 @@ fun getCategoryIcon(key: String): ImageVector {
         "laptop_mac" -> Icons.Default.LaptopMac
         "storefront" -> Icons.Default.Storefront
         "savings" -> Icons.Default.Savings
+        "swap_horiz" -> Icons.Default.SwapHoriz
         "more_horiz" -> Icons.Default.MoreHoriz
         else -> Icons.Default.AttachMoney
     }
@@ -157,5 +159,8 @@ fun getCategoryIcon(key: String): ImageVector {
 
 @Composable
 fun getCategoryColor(key: String): androidx.compose.ui.graphics.Color {
+    if (key.equals("transfer", ignoreCase = true)) {
+        return MaterialTheme.colorScheme.primary
+    }
     return MoneyTrackerTheme.colors.categoryColor(key)
 }

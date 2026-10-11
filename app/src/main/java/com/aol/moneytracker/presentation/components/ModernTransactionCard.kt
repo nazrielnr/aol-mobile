@@ -20,15 +20,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aol.moneytracker.domain.model.Category
-import com.aol.moneytracker.domain.model.PaymentSource
 import com.aol.moneytracker.domain.model.Transaction
 import com.aol.moneytracker.domain.model.TransactionType
+import com.aol.moneytracker.presentation.screens.wallet.TransactionWalletMeta
 import com.aol.moneytracker.presentation.theme.MoneyTrackerTheme
 import com.aol.moneytracker.util.CurrencyFormatter
 import com.aol.moneytracker.util.DateFormatter
@@ -46,9 +47,18 @@ fun ModernTransactionCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     val isIncome = transaction.type == TransactionType.INCOME
+    val isTransfer = transaction.categoryId.equals("transfer", ignoreCase = true)
     val category = Category.findCategory(transaction.categoryId, transaction.type)
-    val paymentSource = PaymentSource.determineSource(transaction)
+
+    val transferInfo = if (isTransfer) {
+        TransactionWalletMeta.resolveTransfer(context, transaction)
+    } else null
+
+    val walletInfo = if (!isTransfer) {
+        TransactionWalletMeta.resolveNormal(context, transaction)
+    } else null
 
     Surface(
         onClick = onClick,
@@ -106,20 +116,29 @@ fun ModernTransactionCard(
 
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(5.dp)
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Icon(
-                        imageVector = paymentSource.icon,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                        modifier = Modifier.size(13.dp)
+                    val logoKey = if (isTransfer) {
+                        transferInfo?.fromProviderKey ?: "bca"
+                    } else {
+                        walletInfo?.providerKey ?: "bca"
+                    }
+                    val subtitleLabel = if (isTransfer) {
+                        transferInfo?.routeLabel ?: ""
+                    } else {
+                        walletInfo?.bankWithCustomLabel ?: ""
+                    }
+
+                    FinLogoCircleBadge(
+                        idOrName = logoKey,
+                        size = 19.dp
                     )
                     Text(
-                        text = stringResource(paymentSource.displayNameRes),
+                        text = subtitleLabel,
                         style = MaterialTheme.typography.bodySmall.copy(
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.78f)
                         ),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
@@ -134,14 +153,23 @@ fun ModernTransactionCard(
                 horizontalAlignment = Alignment.End,
                 verticalArrangement = Arrangement.spacedBy(5.dp)
             ) {
-                val prefix = if (isIncome) "+ " else "- "
+                val prefix = when {
+                    isTransfer -> "⇄ "
+                    isIncome -> "+ "
+                    else -> "- "
+                }
+                val amountColor = when {
+                    isTransfer -> MaterialTheme.colorScheme.primary
+                    isIncome -> MoneyTrackerTheme.colors.income
+                    else -> MaterialTheme.colorScheme.error
+                }
                 Text(
                     text = prefix + CurrencyFormatter.formatRupiah(transaction.amount),
                     style = MaterialTheme.typography.bodyMedium.copy(
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.sp
                     ),
-                    color = if (isIncome) MoneyTrackerTheme.colors.income else MaterialTheme.colorScheme.error
+                    color = amountColor
                 )
 
                 Text(

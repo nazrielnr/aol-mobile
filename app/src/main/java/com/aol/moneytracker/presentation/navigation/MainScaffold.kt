@@ -84,16 +84,23 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.aol.moneytracker.R
+import com.aol.moneytracker.ReceiptCameraActivity
 import com.aol.moneytracker.SettingsActivity
+import com.aol.moneytracker.domain.model.Category
+import com.aol.moneytracker.domain.model.Transaction
 import com.aol.moneytracker.domain.model.TransactionType
 import com.aol.moneytracker.presentation.components.BottomFadeScrim
+import com.aol.moneytracker.presentation.components.VoiceAssistantPopupOverlay
 import com.aol.moneytracker.presentation.screens.activity.ActivityScreen
 import com.aol.moneytracker.presentation.screens.add.AddTransactionBottomSheet
 import com.aol.moneytracker.presentation.screens.home.HomeScreen
 import com.aol.moneytracker.presentation.screens.home.HomeViewModel
 import com.aol.moneytracker.presentation.screens.stats.StatsScreen
 import com.aol.moneytracker.presentation.screens.stats.StatsViewModel
+import com.aol.moneytracker.presentation.screens.wallet.TransactionWalletMeta
 import com.aol.moneytracker.presentation.screens.wallet.WalletScreen
+import com.aol.moneytracker.presentation.screens.wallet.WalletStateHolder
+import com.aol.moneytracker.presentation.screens.wallet.bankWithCustomBracket
 import com.aol.moneytracker.presentation.theme.MoneyTrackerTheme
 import com.aol.moneytracker.util.AppLanguage
 import com.aol.moneytracker.util.LanguageManager
@@ -119,6 +126,9 @@ fun MainScaffold(
     // Mode 2: Long-Press & Drag -> Curved Horizontal Radial Arc (Lead Icon only)
     var isHoldArcOpen by remember { mutableStateOf(false) }
     val isAnySpeedDialOpen = isTapMenuOpen || isHoldArcOpen
+
+    // Google Assistant-style Voice Input Popup state
+    var isVoicePopupOpen by remember { mutableStateOf(false) }
 
     // Currently hovered option index during press-hold-drag: 0 = Voice (Left), 1 = Camera (Center-Top), 2 = Manual (Right)
     var hoveredOptionIndex by remember { mutableStateOf<Int?>(null) }
@@ -147,75 +157,16 @@ fun MainScaffold(
         if (idx >= 0) selectedMonthIndex = idx
     }
 
-    // Camera Launcher for Speed Dial
-    val cameraLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.TakePicturePreview()
-    ) { bitmap ->
-        if (bitmap != null) {
-            initialTitle = context.getString(R.string.prefill_receipt_title)
-            initialAmount = 75000L
-            initialType = TransactionType.EXPENSE
-            initialCategoryId = "shopping"
-            isAddSheetVisible = true
-            Toast.makeText(context, context.getString(R.string.toast_receipt_captured), Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    // Voice Speech Recognizer Launcher for Speed Dial
-    val speechLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            val spokenResults = result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
-            val spokenText = spokenResults?.firstOrNull()
-            if (!spokenText.isNullOrBlank()) {
-                val parsed = VoiceParser.parse(spokenText)
-                initialTitle = parsed.title
-                initialAmount = parsed.amount
-                initialType = parsed.type
-                initialCategoryId = parsed.categoryId
-                isAddSheetVisible = true
-                Toast.makeText(context, context.getString(R.string.toast_voice_heard, spokenText), Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
-
-    fun launchVoiceRecognition() {
-        val langTag = if (LanguageManager.currentLanguage.value == AppLanguage.ENGLISH) "en-US" else "id-ID"
-        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE, langTag)
-            putExtra(RecognizerIntent.EXTRA_PROMPT, context.getString(R.string.speech_prompt))
-        }
-        try {
-            speechLauncher.launch(intent)
-        } catch (e: Exception) {
-            Toast.makeText(context, context.getString(R.string.toast_speech_unavailable), Toast.LENGTH_SHORT).show()
-            // Graceful fallback: open clean modal with default values
-            initialTitle = context.getString(R.string.prefill_fallback_lunch)
-            initialAmount = 25000L
-            initialType = TransactionType.EXPENSE
-            initialCategoryId = "food"
-            isAddSheetVisible = true
-        }
-    }
-
     fun triggerOption(index: Int) {
         when (index) {
-            0 -> launchVoiceRecognition()
+            0 -> {
+                isVoicePopupOpen = true
+            }
             1 -> {
-                try {
-                    cameraLauncher.launch(null)
-                } catch (e: Exception) {
-                    Toast.makeText(context, context.getString(R.string.toast_speech_unavailable), Toast.LENGTH_SHORT).show()
-                }
+                ReceiptCameraActivity.start(context)
             }
             2 -> {
-                initialTitle = ""
-                initialAmount = 0L
-                initialType = TransactionType.EXPENSE
-                initialCategoryId = null
-                isAddSheetVisible = true
+                com.aol.moneytracker.AddTransactionActivity.startCreate(context = context)
             }
         }
     }
@@ -238,7 +189,7 @@ fun MainScaffold(
                 .padding(innerPadding)
         ) {
             // 1. Horizontal Swipeable Pager with all 4 pages pre-composed (0ms tab switch lag)
-            val pageDividerColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f)
+            val pageDividerColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier.fillMaxSize(),
@@ -251,18 +202,9 @@ fun MainScaffold(
                         .drawWithContent {
                             drawContent()
                             val pageOffset = (pagerState.currentPage - page) + pagerState.currentPageOffsetFraction
-                            val strokeWidthPx = 1.dp.toPx()
-                            // Left divider border for pages 1..3 when visible inside the viewport
-                            if (page > 0 && pageOffset < -0.0005f) {
-                                drawLine(
-                                    color = pageDividerColor,
-                                    start = Offset(strokeWidthPx / 2f, 0f),
-                                    end = Offset(strokeWidthPx / 2f, size.height),
-                                    strokeWidth = strokeWidthPx
-                                )
-                            }
-                            // Right divider border for pages 0..2 when visible inside the viewport
-                            if (page < 3 && pageOffset > 0.0005f) {
+                            val strokeWidthPx = 0.5.dp.toPx()
+                            // Single hairline divider drawn once per seam (on the right edge of pages 0..2 when mid-transition)
+                            if (page < 3 && pageOffset > 0.0005f && pageOffset < 0.9995f) {
                                 drawLine(
                                     color = pageDividerColor,
                                     start = Offset(size.width - strokeWidthPx / 2f, 0f),
@@ -285,6 +227,14 @@ fun MainScaffold(
                                 onMonthSelected = onMonthSelected,
                                 onSettingsClick = {
                                     SettingsActivity.start(context)
+                                },
+                                onNotificationClick = {
+                                    com.aol.moneytracker.NotificationActivity.start(context)
+                                },
+                                onNavigateToReports = {
+                                    coroutineScope.launch {
+                                        pagerState.animateScrollToPage(3)
+                                    }
                                 }
                             )
                         }
@@ -348,7 +298,7 @@ fun MainScaffold(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .navigationBarsPadding()
-                    .padding(bottom = 106.dp)
+                    .padding(bottom = 121.dp)
                     .zIndex(20f)
             ) {
                 Column(
@@ -394,7 +344,7 @@ fun MainScaffold(
             }
 
             // 5B. MODE 2 (Long-Press & Drag): Curved Horizontal Radial Arc (Lead Icon ONLY, No Text)
-            // Left (-68dp, -62dp) = Mic | Center Peak (0dp, -90dp) = Camera | Right (+68dp, -62dp) = Manual
+            // Left (-76dp, -66dp) = Manual (2) | Center Peak (0dp, -96dp) = Camera (1) | Right (+76dp, -66dp) = Voice (0)
             AnimatedVisibility(
                 visible = isHoldArcOpen,
                 enter = fadeIn(tween(140)) + scaleIn(
@@ -408,32 +358,32 @@ fun MainScaffold(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .navigationBarsPadding()
-                    .padding(bottom = 32.dp)
+                    .padding(bottom = 49.dp)
                     .zIndex(22f)
             ) {
                 Box(
                     contentAlignment = Alignment.BottomCenter
                 ) {
-                    // Left Arc Button (index 0): 🎙️ Mic
+                    // Left Arc Button (option 2): ✍️ Manual Input
                     SpeedDialArcButton(
-                        icon = Icons.Default.Mic,
-                        contentDescription = stringResource(R.string.speed_dial_voice),
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        contentColor = MaterialTheme.colorScheme.primary,
-                        activeContainerColor = MaterialTheme.colorScheme.primary,
-                        activeContentColor = MaterialTheme.colorScheme.onPrimary,
-                        isHovered = hoveredOptionIndex == 0,
-                        offsetX = (-68).dp,
-                        offsetY = (-62).dp,
+                        icon = Icons.Outlined.EditNote,
+                        contentDescription = stringResource(R.string.speed_dial_manual),
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                        contentColor = MaterialTheme.colorScheme.tertiary,
+                        activeContainerColor = MaterialTheme.colorScheme.tertiary,
+                        activeContentColor = MaterialTheme.colorScheme.onTertiary,
+                        isHovered = hoveredOptionIndex == 2,
+                        offsetX = (-76).dp,
+                        offsetY = (-66).dp,
                         onClick = {
                             triggerHapticPulse(context, view, isConfirm = true)
                             isHoldArcOpen = false
                             hoveredOptionIndex = null
-                            triggerOption(0)
+                            triggerOption(2)
                         }
                     )
 
-                    // Center-Top Arc Button (index 1): 📸 Camera
+                    // Center-Top Arc Button (option 1): 📸 Camera
                     SpeedDialArcButton(
                         icon = Icons.Outlined.PhotoCamera,
                         contentDescription = stringResource(R.string.speed_dial_camera),
@@ -443,7 +393,7 @@ fun MainScaffold(
                         activeContentColor = MaterialTheme.colorScheme.onSecondary,
                         isHovered = hoveredOptionIndex == 1,
                         offsetX = 0.dp,
-                        offsetY = (-90).dp,
+                        offsetY = (-96).dp,
                         onClick = {
                             triggerHapticPulse(context, view, isConfirm = true)
                             isHoldArcOpen = false
@@ -452,22 +402,22 @@ fun MainScaffold(
                         }
                     )
 
-                    // Right Arc Button (index 2): ✍️ Manual Input
+                    // Right Arc Button (option 0): 🎙️ Mic (Voice)
                     SpeedDialArcButton(
-                        icon = Icons.Outlined.EditNote,
-                        contentDescription = stringResource(R.string.speed_dial_manual),
-                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                        contentColor = MaterialTheme.colorScheme.tertiary,
-                        activeContainerColor = MaterialTheme.colorScheme.tertiary,
-                        activeContentColor = MaterialTheme.colorScheme.onTertiary,
-                        isHovered = hoveredOptionIndex == 2,
-                        offsetX = 68.dp,
-                        offsetY = (-62).dp,
+                        icon = Icons.Default.Mic,
+                        contentDescription = stringResource(R.string.speed_dial_voice),
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.primary,
+                        activeContainerColor = MaterialTheme.colorScheme.primary,
+                        activeContentColor = MaterialTheme.colorScheme.onPrimary,
+                        isHovered = hoveredOptionIndex == 0,
+                        offsetX = 76.dp,
+                        offsetY = (-66).dp,
                         onClick = {
                             triggerHapticPulse(context, view, isConfirm = true)
                             isHoldArcOpen = false
                             hoveredOptionIndex = null
-                            triggerOption(2)
+                            triggerOption(0)
                         }
                     )
                 }
@@ -503,14 +453,17 @@ fun MainScaffold(
                     val newHover = if (distFromButtonCenter < minActivationPx || pointerOffsetFromButtonCenter.y > maxBottomPx) {
                         null
                     } else {
+                        // Left = Manual (2), Center-Top = Camera (1), Right = Voice (0)
                         val targets = listOf(
-                            Offset(with(density) { (-68).dp.toPx() }, with(density) { (-62).dp.toPx() }),
-                            Offset(0f, with(density) { (-90).dp.toPx() }),
-                            Offset(with(density) { 68.dp.toPx() }, with(density) { (-62).dp.toPx() })
+                            2 to Offset(with(density) { (-76).dp.toPx() }, with(density) { (-66).dp.toPx() }),
+                            1 to Offset(0f, with(density) { (-96).dp.toPx() }),
+                            0 to Offset(with(density) { 76.dp.toPx() }, with(density) { (-66).dp.toPx() })
                         )
-                        val maxSnapRadiusPx = with(density) { 78.dp.toPx() }
-                        targets.indices
-                            .map { idx -> idx to (targets[idx] - pointerOffsetFromButtonCenter).getDistance() }
+                        val maxSnapRadiusPx = with(density) { 84.dp.toPx() }
+                        targets
+                            .map { (optionIdx, targetOffset) ->
+                                optionIdx to (targetOffset - pointerOffsetFromButtonCenter).getDistance()
+                            }
                             .filter { it.second <= maxSnapRadiusPx }
                             .minByOrNull { it.second }
                             ?.first
@@ -538,6 +491,33 @@ fun MainScaffold(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .zIndex(25f)
+            )
+
+            // 7. Google Assistant-Style Voice Input Popup (Catat Suara AI with TopBar Wave & Equalizer)
+            VoiceAssistantPopupOverlay(
+                visible = isVoicePopupOpen,
+                onDismiss = { isVoicePopupOpen = false },
+                onConfirmVoiceResult = { confirmedTx, openEditor ->
+                    isVoicePopupOpen = false
+                    if (openEditor || confirmedTx.amount <= 0L) {
+                        com.aol.moneytracker.AddTransactionActivity.startCreate(
+                            context = context,
+                            initialTitle = confirmedTx.title,
+                            initialAmount = confirmedTx.amount,
+                            initialType = confirmedTx.type,
+                            initialCategoryId = confirmedTx.categoryId,
+                            initialNote = confirmedTx.note
+                        )
+                    } else {
+                        WalletStateHolder.applyTransactionEffect(context, confirmedTx)
+                        homeViewModel.addTransaction(confirmedTx)
+                        coroutineScope.launch {
+                            snackbarHostState.showSnackbar(
+                                context.getString(R.string.snackbar_transaction_saved, confirmedTx.title)
+                            )
+                        }
+                    }
+                }
             )
         }
     }
@@ -613,7 +593,7 @@ private fun SpeedDialActionItem(
 }
 
 /**
- * Mode 2 (Long-Press & Drag): Icon-Only Lead Icon in a Curved Horizontal Radial Arc
+ * Mode 2 (Long-Press & Drag): Enlarged Icon-Only Lead Icon in a Curved Horizontal Radial Arc
  */
 @Composable
 private fun SpeedDialArcButton(
@@ -658,7 +638,7 @@ private fun SpeedDialArcButton(
         ),
         modifier = Modifier
             .offset(x = offsetX, y = offsetY)
-            .size(54.dp)
+            .size(64.dp)
             .graphicsLayer {
                 scaleX = scale
                 scaleY = scale
@@ -678,7 +658,7 @@ private fun SpeedDialArcButton(
                         imageVector = icon,
                         contentDescription = contentDescription,
                         tint = badgeTint,
-                        modifier = Modifier.size(22.dp)
+                        modifier = Modifier.size(28.dp)
                     )
                 }
             }

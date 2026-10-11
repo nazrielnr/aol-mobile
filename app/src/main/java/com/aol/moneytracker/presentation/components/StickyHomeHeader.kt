@@ -175,21 +175,34 @@ fun StickyHomeHeader(
                 modifier = Modifier.size(38.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = Icons.Outlined.Notifications,
-                        contentDescription = stringResource(R.string.cd_notifications),
-                        tint = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.size(19.dp)
-                    )
-                    // Unread notification red dot badge
                     Box(
-                        modifier = Modifier
-                            .size(7.dp)
-                            .align(Alignment.TopEnd)
-                            .padding(top = 2.dp, end = 2.dp)
-                            .clip(CircleShape)
-                            .background(appColors.notificationBadge)
-                    )
+                        modifier = Modifier.size(21.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Notifications,
+                            contentDescription = stringResource(R.string.cd_notifications),
+                            tint = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.size(19.dp)
+                        )
+                        if (com.aol.moneytracker.presentation.screens.notification.NotificationStateHolder.hasUnread) {
+                            Box(
+                                modifier = Modifier
+                                    .size(8.5.dp)
+                                    .align(Alignment.TopEnd)
+                                    .clip(CircleShape)
+                                    .background(MaterialTheme.colorScheme.surfaceContainerLow),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(6.dp)
+                                        .clip(CircleShape)
+                                        .background(appColors.notificationBadge)
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }

@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.aol.moneytracker.presentation.screens.home.TransactionFilter
 import com.aol.moneytracker.presentation.theme.MoneyTrackerTheme
@@ -19,7 +20,7 @@ import com.aol.moneytracker.presentation.theme.MoneyTrackerTheme
 /**
  * FilterDropdownMenu:
  * Specialized transaction filter dropdown powered by the universal [AppDropdownMenu].
- * - Full-rounded CircleShape pill trigger button with no extra leading icon.
+ * - Full-rounded CircleShape pill trigger button matching the "Detail >" pill dimensions.
  * - Fluid popup enter/exit animation.
  * - Iconography for All, Income, and Expense filter types.
  */
@@ -27,7 +28,8 @@ import com.aol.moneytracker.presentation.theme.MoneyTrackerTheme
 fun FilterDropdownMenu(
     selectedFilter: TransactionFilter,
     onFilterSelected: (TransactionFilter) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    triggerMinWidth: Dp = 0.dp
 ) {
     val context = LocalContext.current
 
@@ -60,8 +62,14 @@ fun FilterDropdownMenu(
         },
         triggerLeadingIcon = null,
         triggerShape = CircleShape,
+        triggerHeight = 32.dp,
+        triggerMinWidth = triggerMinWidth,
+        triggerStartPadding = 10.dp,
+        triggerEndPadding = 8.dp,
+        triggerContentSpacing = 2.dp,
         menuAlignment = Alignment.TopEnd,
         menuWidth = 175.dp,
+        popupOffsetY = 36.dp,
         modifier = modifier
     )
 }

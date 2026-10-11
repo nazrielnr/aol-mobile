@@ -79,6 +79,12 @@ class HomeViewModel(
         }
     }
 
+    fun updateTransaction(transaction: Transaction) {
+        viewModelScope.launch {
+            repository.updateTransaction(transaction)
+        }
+    }
+
     companion object {
         fun provideFactory(repository: TransactionRepository): ViewModelProvider.Factory {
             return object : ViewModelProvider.Factory {

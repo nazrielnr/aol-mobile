@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -116,7 +117,7 @@ fun ActivityScreen(
     var selectedDay by remember { mutableStateOf<Int?>(null) } // null = All Days (1..31)
 
     var selectedTransactionForDetail by remember { mutableStateOf<Transaction?>(null) }
-    var transactionToDeleteId by remember { mutableStateOf<Long?>(null) }
+    var transactionToDelete by remember { mutableStateOf<Transaction?>(null) }
     val detailSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     val allPeriodsText = stringResource(R.string.period_all)
@@ -191,11 +192,10 @@ fun ActivityScreen(
         map
     }
 
-    // Filter transactions by search, type, month, and day
-    val filteredTransactions = remember(
+    // Base transactions filtered by search, month, and day (used for summary card totals so they never zero out)
+    val baseTransactions = remember(
         uiState.transactions,
         searchQuery,
-        selectedTypeFilter,
         selectedDay,
         selectedMonth,
         allPeriodsText,
@@ -224,23 +224,32 @@ fun ActivityScreen(
                         tx.amount.toString().contains(searchQuery)
             }
 
-            val matchesType = selectedTypeFilter == null || tx.type == selectedTypeFilter
-
             val matchesDay = if (selectedDay == null) {
                 true
             } else {
                 cal.get(Calendar.DAY_OF_MONTH) == selectedDay
             }
 
-            matchesMonth && matchesSearch && matchesType && matchesDay
+            matchesMonth && matchesSearch && matchesDay
         }
     }
 
-    val totalIncome = remember(filteredTransactions) {
-        filteredTransactions.filter { it.type == TransactionType.INCOME }.sumOf { it.amount }
+    val totalIncome = remember(baseTransactions) {
+        baseTransactions.filter { it.type == TransactionType.INCOME }.sumOf { it.amount }
     }
-    val totalExpense = remember(filteredTransactions) {
-        filteredTransactions.filter { it.type == TransactionType.EXPENSE }.sumOf { it.amount }
+    val totalExpense = remember(baseTransactions) {
+        baseTransactions.filter {
+            it.type == TransactionType.EXPENSE && !it.categoryId.equals("transfer", ignoreCase = true)
+        }.sumOf { it.amount }
+    }
+
+    // Filter transactions by selected type
+    val filteredTransactions = remember(baseTransactions, selectedTypeFilter) {
+        if (selectedTypeFilter == null) {
+            baseTransactions
+        } else {
+            baseTransactions.filter { it.type == selectedTypeFilter }
+        }
     }
 
     // Group by date (recomputes when language switches so date headers update immediately)
@@ -261,6 +270,8 @@ fun ActivityScreen(
         stringResource(R.string.calendar_day_sun)
     )
 
+    val listState = rememberLazyListState()
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -268,6 +279,7 @@ fun ActivityScreen(
     ) {
         // MAIN SCROLLABLE CONTENT (Scrolls smoothly beneath TopFadeScrim)
         LazyColumn(
+            state = listState,
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
                 top = statusBarHeight + topBarHeight + 8.dp,
@@ -428,35 +440,6 @@ fun ActivityScreen(
                 }
             }
 
-            // C. 3-WAY SEGMENTED FILTER CHIPS
-            item(key = "filter_chips") {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 20.dp, vertical = 6.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    FilterPillChip(
-                        label = stringResource(R.string.activity_filter_all_count, filteredTransactions.size),
-                        isSelected = selectedTypeFilter == null,
-                        onClick = { selectedTypeFilter = null },
-                        modifier = Modifier.weight(1f)
-                    )
-                    FilterPillChip(
-                        label = stringResource(R.string.type_expense),
-                        isSelected = selectedTypeFilter == TransactionType.EXPENSE,
-                        onClick = { selectedTypeFilter = TransactionType.EXPENSE },
-                        modifier = Modifier.weight(1f)
-                    )
-                    FilterPillChip(
-                        label = stringResource(R.string.type_income),
-                        isSelected = selectedTypeFilter == TransactionType.INCOME,
-                        onClick = { selectedTypeFilter = TransactionType.INCOME },
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            }
-
             // D. TRANSACTION LIST (With Borders & Dividers matching HomeScreen)
             if (filteredTransactions.isEmpty()) {
                 item(key = "empty_state") {
@@ -479,7 +462,11 @@ fun ActivityScreen(
                 if (selectedDay != null) {
                     // Single day selected
                     val dayTotal = filteredTransactions.sumOf {
-                        if (it.type == TransactionType.EXPENSE) -it.amount else it.amount
+                        when {
+                            it.categoryId.equals("transfer", ignoreCase = true) -> 0L
+                            it.type == TransactionType.EXPENSE -> -it.amount
+                            else -> it.amount
+                        }
                     }
 
                     item(key = "header_single_day_$selectedDay") {
@@ -539,7 +526,11 @@ fun ActivityScreen(
                     // Grouped by date with HorizontalDivider between sections (Same as HomeScreen)
                     groupedTransactions.entries.forEach { (dateGroup, transactionsInGroup) ->
                         val dayTotal = transactionsInGroup.sumOf {
-                            if (it.type == TransactionType.EXPENSE) -it.amount else it.amount
+                            when {
+                                it.categoryId.equals("transfer", ignoreCase = true) -> 0L
+                                it.type == TransactionType.EXPENSE -> -it.amount
+                                else -> it.amount
+                            }
                         }
 
                         item(key = "header_$dateGroup") {
@@ -596,13 +587,14 @@ fun ActivityScreen(
             }
         }
 
-        // Top Fade Scrim: Smooth gradient fade beneath TopBar
+        // Top Fade Scrim: Smooth gradient fade beneath TopBar when scrolled
         TopFadeScrim(
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.TopCenter)
                 .zIndex(5f),
-            height = statusBarHeight + topBarHeight + 34.dp
+            height = statusBarHeight + topBarHeight + 48.dp,
+            isScrolled = listState.canScrollBackward
         )
 
         // Sticky TopBar with Expandable Search
@@ -628,15 +620,15 @@ fun ActivityScreen(
             onDismiss = { selectedTransactionForDetail = null },
             onDeleteClick = {
                 selectedTransactionForDetail = null
-                transactionToDeleteId = it.id
+                transactionToDelete = it
             }
         )
     }
 
     // Confirmation Dialog for Deletion
-    transactionToDeleteId?.let { id ->
+    transactionToDelete?.let { tx ->
         AlertDialog(
-            onDismissRequest = { transactionToDeleteId = null },
+            onDismissRequest = { transactionToDelete = null },
             title = {
                 Text(
                     text = stringResource(R.string.dialog_delete_transaction_title),
@@ -653,15 +645,16 @@ fun ActivityScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        viewModel.deleteTransaction(id)
-                        transactionToDeleteId = null
+                        com.aol.moneytracker.presentation.screens.wallet.WalletStateHolder.revertTransactionEffect(context, tx)
+                        viewModel.deleteTransaction(tx.id)
+                        transactionToDelete = null
                     }
                 ) {
                     Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { transactionToDeleteId = null }) {
+                TextButton(onClick = { transactionToDelete = null }) {
                     Text(stringResource(R.string.action_cancel))
                 }
             }
@@ -940,7 +933,7 @@ private fun RealCalendarCell(
 }
 
 /**
- * 2-Column Bento Summary Card (Interactive filter toggle).
+ * 2-Column Bento Summary Card (Interactive filter toggle without colored card background).
  */
 @Composable
 private fun ActivitySummaryCard(
@@ -955,10 +948,14 @@ private fun ActivitySummaryCard(
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(18.dp),
-        color = if (isSelected) accentColor.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surfaceContainerLow,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
         border = BorderStroke(
             width = if (isSelected) 1.5.dp else 1.dp,
-            color = if (isSelected) accentColor.copy(alpha = 0.6f) else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f)
+            color = if (isSelected) {
+                MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f)
+            } else {
+                MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f)
+            }
         ),
         modifier = modifier
     ) {
@@ -999,45 +996,7 @@ private fun ActivitySummaryCard(
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp
                 ),
-                color = if (isSelected) accentColor else MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-    }
-}
-
-/**
- * Filter Pill Chip (All, Expenses, Income).
- */
-@Composable
-private fun FilterPillChip(
-    label: String,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Surface(
-        onClick = onClick,
-        shape = CircleShape,
-        color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerLow,
-        border = BorderStroke(
-            1.dp,
-            if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.5f) else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)
-        ),
-        modifier = modifier.height(36.dp)
-    ) {
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier.padding(horizontal = 12.dp)
-        ) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelMedium.copy(
-                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                    fontSize = 12.sp
-                ),
-                color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )

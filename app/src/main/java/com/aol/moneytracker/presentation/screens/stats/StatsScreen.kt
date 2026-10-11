@@ -3,7 +3,6 @@ package com.aol.moneytracker.presentation.screens.stats
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -19,7 +18,6 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -38,10 +36,13 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ReceiptLong
+import androidx.compose.material.icons.automirrored.filled.TrendingDown
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.rounded.BarChart
 import androidx.compose.material.icons.rounded.PieChart
@@ -52,7 +53,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -65,6 +65,7 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -104,6 +105,7 @@ fun StatsScreen(
     onMonthSelected: (String) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
 
     var selectedType by remember { mutableStateOf(TransactionType.EXPENSE) }
     var isDonutView by remember { mutableStateOf(true) }
@@ -111,7 +113,8 @@ fun StatsScreen(
 
     val statusBarHeight = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val topBarHeight = 52.dp
-    val topScrimHeight = statusBarHeight + topBarHeight + 34.dp
+    val topScrimHeight = statusBarHeight + topBarHeight + 48.dp
+    val listState = rememberLazyListState()
 
     val currentCategories = if (selectedType == TransactionType.EXPENSE) {
         uiState.expenseCategories
@@ -137,6 +140,7 @@ fun StatsScreen(
             }
     ) {
         LazyColumn(
+            state = listState,
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
                 start = 20.dp,
@@ -146,18 +150,7 @@ fun StatsScreen(
             ),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // 1. TOP SEGMENTED PILL SWITCH (Expenses vs Income)
-            item(key = "pill_switch") {
-                PillSegmentedSwitch(
-                    selectedType = selectedType,
-                    onTypeSelected = { newType ->
-                        selectedType = newType
-                        selectedCategoryId = null
-                    }
-                )
-            }
-
-            // 2. REPORT HEADER ROW (Title & Chart View Toggle)
+            // 1. REPORT HEADER ROW (Type Pill Action Dropdown & Chart View Toggle)
             item(key = "report_header") {
                 Row(
                     modifier = Modifier
@@ -166,17 +159,41 @@ fun StatsScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = if (selectedType == TransactionType.EXPENSE) {
-                            stringResource(R.string.stats_expenses_report)
-                        } else {
-                            stringResource(R.string.stats_income_report)
+                    AppDropdownMenu(
+                        items = TransactionType.entries,
+                        selectedItem = selectedType,
+                        onItemSelected = { newType ->
+                            selectedType = newType
+                            selectedCategoryId = null
                         },
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 20.sp
-                        ),
-                        color = MaterialTheme.colorScheme.onSurface
+                        dropdownName = "StatsTypeDropdown",
+                        itemLabel = { context.getString(it.labelRes) },
+                        itemIcon = { type, isSelected ->
+                            val typeIcon = when (type) {
+                                TransactionType.EXPENSE -> Icons.AutoMirrored.Filled.TrendingDown
+                                TransactionType.INCOME -> Icons.AutoMirrored.Filled.TrendingUp
+                            }
+
+                            val iconTint = when {
+                                isSelected -> MaterialTheme.colorScheme.onPrimaryContainer
+                                type == TransactionType.INCOME -> MoneyTrackerTheme.colors.income
+                                else -> MaterialTheme.colorScheme.error
+                            }
+
+                            Icon(
+                                imageVector = typeIcon,
+                                contentDescription = null,
+                                tint = iconTint,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        },
+                        triggerLeadingIcon = null,
+                        triggerShape = CircleShape,
+                        triggerHeight = 38.dp,
+                        triggerContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                        triggerBorderColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
+                        menuAlignment = Alignment.TopStart,
+                        menuWidth = 175.dp
                     )
 
                     // Bar vs Donut Chart View Toggle Pill
@@ -300,7 +317,8 @@ fun StatsScreen(
                 .fillMaxWidth()
                 .align(Alignment.TopCenter)
                 .zIndex(5f),
-            height = topScrimHeight
+            height = topScrimHeight,
+            isScrolled = listState.canScrollBackward
         )
 
         // Stats TopBar (slides together with StatsScreen during pager swipe)
@@ -363,100 +381,6 @@ fun StatsTopBar(
                         triggerContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                         triggerBorderColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
                         modifier = Modifier
-                    )
-                }
-            }
-        }
-    }
-}
-
-/**
- * Pill Segmented Switch:
- * High contrast, fluid sliding indicator pill, no overlap
- */
-@Composable
-fun PillSegmentedSwitch(
-    selectedType: TransactionType,
-    onTypeSelected: (TransactionType) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val isExpense = selectedType == TransactionType.EXPENSE
-
-    Surface(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(48.dp),
-        shape = CircleShape,
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f))
-    ) {
-        BoxWithConstraints(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(4.dp)
-        ) {
-            val pillWidth = maxWidth / 2
-            val indicatorOffset by animateDpAsState(
-                targetValue = if (isExpense) 0.dp else pillWidth,
-                animationSpec = spring(stiffness = 500f, dampingRatio = 0.85f),
-                label = "pill_slide"
-            )
-
-            // Animated white/bright capsule indicator
-            Surface(
-                modifier = Modifier
-                    .width(pillWidth)
-                    .fillMaxHeight()
-                    .offset(x = indicatorOffset),
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.surfaceBright,
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)),
-                shadowElevation = 2.dp
-            ) {}
-
-            // Clickable Text Labels
-            Row(modifier = Modifier.fillMaxSize()) {
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxHeight()
-                        .clip(CircleShape)
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                            onClick = { onTypeSelected(TransactionType.EXPENSE) }
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = stringResource(R.string.type_expense),
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontWeight = if (isExpense) FontWeight.Bold else FontWeight.Medium,
-                            fontSize = 14.sp
-                        ),
-                        color = if (isExpense) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxHeight()
-                        .clip(CircleShape)
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                            onClick = { onTypeSelected(TransactionType.INCOME) }
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = stringResource(R.string.type_income),
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontWeight = if (!isExpense) FontWeight.Bold else FontWeight.Medium,
-                            fontSize = 14.sp
-                        ),
-                        color = if (!isExpense) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }

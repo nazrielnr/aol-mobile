@@ -38,6 +38,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aol.moneytracker.R
+import com.aol.moneytracker.presentation.screens.notification.NotificationStateHolder
 import com.aol.moneytracker.presentation.theme.MoneyTrackerTheme
 
 /**
@@ -52,6 +53,7 @@ fun GlobalTopBar(
     selectedMonth: String,
     onMonthSelected: (String) -> Unit,
     modifier: Modifier = Modifier,
+    hasUnreadNotifications: Boolean = NotificationStateHolder.hasUnread,
     onSettingsClick: () -> Unit = {},
     onProfileClick: () -> Unit = {},
     onNotificationClick: () -> Unit = {}
@@ -222,20 +224,34 @@ fun GlobalTopBar(
                     .align(Alignment.CenterEnd)
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = Icons.Outlined.Notifications,
-                        contentDescription = stringResource(R.string.cd_notifications),
-                        tint = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.size(19.dp)
-                    )
                     Box(
-                        modifier = Modifier
-                            .size(7.dp)
-                            .align(Alignment.TopEnd)
-                            .padding(top = 2.dp, end = 2.dp)
-                            .clip(CircleShape)
-                            .background(MoneyTrackerTheme.colors.notificationBadge)
-                    )
+                        modifier = Modifier.size(21.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Notifications,
+                            contentDescription = stringResource(R.string.cd_notifications),
+                            tint = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.size(19.dp)
+                        )
+                        if (hasUnreadNotifications) {
+                            Box(
+                                modifier = Modifier
+                                    .size(8.5.dp)
+                                    .align(Alignment.TopEnd)
+                                    .clip(CircleShape)
+                                    .background(MaterialTheme.colorScheme.surfaceContainerLow),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(6.dp)
+                                        .clip(CircleShape)
+                                        .background(MoneyTrackerTheme.colors.notificationBadge)
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }

@@ -71,7 +71,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aol.moneytracker.R
-import com.aol.moneytracker.presentation.components.TopFadeScrim
+import com.aol.moneytracker.presentation.components.UniversalSubScreenScaffold
 import com.aol.moneytracker.presentation.theme.MoneyTrackerTheme
 import com.aol.moneytracker.util.AppLanguage
 import com.aol.moneytracker.util.LanguageManager
@@ -92,25 +92,15 @@ fun SettingsScreen(
     var isBiometricEnabled by remember { mutableStateOf(false) }
     var isHideBalanceEnabled by remember { mutableStateOf(false) }
 
-    Box(
+    UniversalSubScreenScaffold(
+        title = stringResource(R.string.settings_title),
+        onBackClick = onBackClick,
         modifier = modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-    ) {
-        Scaffold(
-            containerColor = Color.Transparent,
-            topBar = {},
-            bottomBar = {}
-        ) { _ ->
-            Box(modifier = Modifier.fillMaxSize()) {
-                // Layer 1: Scrollable Settings Content
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(
-                        top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 64.dp + 12.dp,
-                        bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 60.dp
-                    )
-                ) {
+    ) { contentPadding ->
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = contentPadding
+        ) {
             // Profile Card
             item {
                 Surface(
@@ -395,38 +385,6 @@ fun SettingsScreen(
                         }
                     )
                 }
-            }
-        }
-
-                // Layer 2: Standardized Top Scrim & Material 3 TopAppBar Overlay (matching Amaya reference)
-                TopFadeScrim(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .align(Alignment.TopCenter),
-                    height = 170.dp
-                )
-
-                TopAppBar(
-                    title = {
-                        Text(
-                            text = stringResource(R.string.settings_title),
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(start = 12.dp)
-                        )
-                    },
-                    navigationIcon = {
-                        SettingsBackButton(onClick = onBackClick)
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color.Transparent,
-                        scrolledContainerColor = Color.Transparent
-                    ),
-                    modifier = Modifier
-                        .statusBarsPadding()
-                        .padding(horizontal = 12.dp),
-                    windowInsets = WindowInsets(0.dp)
-                )
             }
         }
     }

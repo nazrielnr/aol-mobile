@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -78,6 +79,10 @@ fun <T> AppDropdownMenu(
     triggerLeadingIcon: (@Composable () -> Unit)? = null,
     triggerShape: Shape = CircleShape,
     triggerHeight: Dp = 38.dp,
+    triggerMinWidth: Dp = 0.dp,
+    triggerStartPadding: Dp? = null,
+    triggerEndPadding: Dp = 12.dp,
+    triggerContentSpacing: Dp = 5.dp,
     triggerContainerColor: Color = MaterialTheme.colorScheme.surfaceContainerLow,
     triggerBorderColor: Color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
     menuAlignment: Alignment = Alignment.TopEnd,
@@ -110,15 +115,27 @@ fun <T> AppDropdownMenu(
                     width = 1.dp,
                     color = triggerBorderColor
                 ),
-                modifier = Modifier.height(triggerHeight)
+                modifier = Modifier
+                    .height(triggerHeight)
+                    .then(
+                        if (triggerMinWidth > 0.dp) {
+                            Modifier.widthIn(min = triggerMinWidth)
+                        } else {
+                            Modifier
+                        }
+                    )
             ) {
                 Row(
                     modifier = Modifier.padding(
-                        start = if (triggerLeadingIcon != null) 10.dp else 14.dp,
-                        end = 12.dp
+                        start = triggerStartPadding ?: if (triggerLeadingIcon != null) 10.dp else 14.dp,
+                        end = triggerEndPadding
                     ),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(5.dp)
+                    horizontalArrangement = if (triggerMinWidth > 0.dp) {
+                        Arrangement.SpaceBetween
+                    } else {
+                        Arrangement.spacedBy(triggerContentSpacing)
+                    }
                 ) {
                     if (triggerLeadingIcon != null) {
                         triggerLeadingIcon()
@@ -130,7 +147,12 @@ fun <T> AppDropdownMenu(
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 12.sp
                         ),
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = if (triggerMinWidth > 0.dp) {
+                            Modifier.padding(end = triggerContentSpacing)
+                        } else {
+                            Modifier
+                        }
                     )
 
                     Icon(

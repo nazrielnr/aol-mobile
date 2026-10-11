@@ -94,9 +94,14 @@ fun FloatingBottomBar(
     var tabLayouts by remember { mutableStateOf(List(destinations.size) { Rect.Zero }) }
     val activePillColor = MaterialTheme.colorScheme.primaryContainer
 
-    // 64dp center spacer gives comfortable breathing room on both sides of the 58dp (+) button
+    // 64dp center slot gives comfortable breathing room on both sides of the elevated (+) button
     val centerSpacerWidth = 64.dp
     val innerHorizontalPadding = 6.dp
+
+    val currentOnAddClick by rememberUpdatedState(onAddClick)
+    val currentOnDragStart by rememberUpdatedState(onDragStart)
+    val currentOnDragMove by rememberUpdatedState(onDragMove)
+    val currentOnDragEnd by rememberUpdatedState(onDragEnd)
 
     Box(
         modifier = modifier
@@ -176,7 +181,7 @@ fun FloatingBottomBar(
                         }
                     }
             ) {
-                // Single Row containing all 4 tabs + center spacer in the same coordinate space
+                // Single Row containing all 4 tabs + center "Catat" slot in the same coordinate space
                 Row(
                     modifier = Modifier.fillMaxSize(),
                     verticalAlignment = Alignment.CenterVertically
@@ -210,8 +215,41 @@ fun FloatingBottomBar(
                         }
                     }
 
-                    // Symmetrical Center Spacer for the elevated (+) button
-                    Spacer(modifier = Modifier.width(centerSpacerWidth))
+                    // Symmetrical Center Slot for the elevated (+) button + aligned "Catat" label
+                    Column(
+                        modifier = Modifier
+                            .width(centerSpacerWidth)
+                            .fillMaxHeight()
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                                onClick = { currentOnAddClick() }
+                            )
+                            .padding(horizontal = 2.dp, vertical = 3.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Spacer(modifier = Modifier.size(20.dp))
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = stringResource(R.string.nav_record),
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontWeight = if (isExpanded) FontWeight.Bold else FontWeight.Medium,
+                                fontSize = 10.5.sp,
+                                lineHeight = 12.sp,
+                                letterSpacing = (-0.1).sp
+                            ),
+                            color = if (isExpanded) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            },
+                            maxLines = 1,
+                            softWrap = false,
+                            overflow = TextOverflow.Visible,
+                            textAlign = TextAlign.Center
+                        )
+                    }
 
                     // Right Section: Aktivitas (2) & Laporan (3)
                     for (i in 2..3) {
@@ -245,7 +283,7 @@ fun FloatingBottomBar(
             }
         }
 
-        // 2. Separate Center Elevated Action Button
+        // 2. Separate Center Elevated Action Button (raised so "Catat" sits cleanly underneath)
         val addIconRotation by animateFloatAsState(
             targetValue = if (isExpanded) 45f else 0f,
             animationSpec = spring(
@@ -265,15 +303,10 @@ fun FloatingBottomBar(
             label = "buttonIconColor"
         )
 
-        val currentOnAddClick by rememberUpdatedState(onAddClick)
-        val currentOnDragStart by rememberUpdatedState(onDragStart)
-        val currentOnDragMove by rememberUpdatedState(onDragMove)
-        val currentOnDragEnd by rememberUpdatedState(onDragEnd)
-
         Box(
             modifier = Modifier
-                .offset(y = (-18).dp)
-                .size(58.dp)
+                .offset(y = (-37).dp)
+                .size(54.dp)
                 .shadow(elevation = 8.dp, shape = CircleShape)
                 .clip(CircleShape)
                 .background(buttonBackgroundColor)
